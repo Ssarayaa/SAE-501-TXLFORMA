@@ -1,6 +1,8 @@
 # SAE-501-TXLFORMA
 Projet : SAE 501- Développer pour le web et concevoir un dispositif interactifs
-#Nom de projet : TXLFORMA (Site de formations) Nom d’équipe : PixelDev
+
+Nom de projet : TXLFORMA (Site de formations) 
+Nom d’équipe : PixelDev
 
 Nom des parties prenantes :
 
