@@ -5,9 +5,10 @@ Nom de projet : TXLFORMA (Site de formations)
 Nom d’équipe : PixelDev
 
 Nom des parties prenantes : 
-- Thylia BROUILLARD
+- Sarah ZAIEM : Chef de projet
 - Nicolas BUISSET
-- Sarah ZAIEM : Chef de projet 
+
+- - Thylia BROUILLARD
 
 Encadrants : 
 - Laroussi (Coordinateur de la SAE et Développement BackEnd)
