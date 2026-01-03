@@ -8,7 +8,7 @@ Nom des parties prenantes :
 - Sarah ZAIEM : Chef de projet
 - Nicolas BUISSET
 
-- - Thylia BROUILLARD
+- Thylia BROUILLARD
 
 Encadrants : 
 - Laroussi (Coordinateur de la SAE et Développement BackEnd)
