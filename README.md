@@ -7,7 +7,6 @@ Nom d’équipe : PixelDev
 Nom des parties prenantes : 
 - Sarah ZAIEM : Chef de projet
 - Nicolas BUISSET
-
 - Thylia BROUILLARD
 
 Encadrants : 
