@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Footer from '../components/Footer';
+import { useNavigate } from 'react-router-dom';
 
-// --- JEU D'ICÔNES SVG ---
+// ... (Gardez vos constantes Icons et formaterDate ici, je ne les répète pas pour alléger) ...
 const Icons = {
   User: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>,
+  // ... Copiez le reste de vos icones ici ...
   Mail: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>,
   Phone: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>,
   MapPin: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>,
@@ -19,7 +21,6 @@ const Icons = {
   Trash: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
 };
 
-// --- UTILITAIRE DATE ---
 const formaterDate = (dateString) => {
   if (!dateString) return "-";
   const date = new Date(dateString);
@@ -32,6 +33,7 @@ const formaterDate = (dateString) => {
 
 const Profil = () => {
   const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const navigate = useNavigate();
   const isIntervenant = user?.role === 'INTERVENANT';
 
   // --- STATES ---
@@ -58,16 +60,7 @@ const Profil = () => {
 
   // Formulaires
   const [formationData, setFormationData] = useState({ titre: '', categorie: '', description: '', duree: '', lieu: '', prix: '' });
-
-  // --- STATE SESSION (Remplacé par la version fonctionnelle) ---
-  const [sessionForm, setSessionForm] = useState({
-    date: '',
-    heureDebut: '',
-    heureFin: '',
-    nbPlaces: 12,
-    formationId: '',
-    prix: ''
-  });
+  const [sessionForm, setSessionForm] = useState({ date: '', heureDebut: '', heureFin: '', nbPlaces: 12, formationId: '', prix: '' });
 
   useEffect(() => {
     if (user?.id) refreshData();
@@ -83,35 +76,35 @@ const Profil = () => {
         let myId = null;
         if (resI.ok) {
           const all = await resI.json();
+          // On cherche si cet utilisateur existe dans la table 'intervenant'
           const me = all.find(i => i.utilisateur && String(i.utilisateur.id) === String(user.id));
           if (me) {
             setCurrentIntervenant(me);
             myId = me.id;
           }
         }
-        const resF = await fetch('http://localhost:8080/api/formations/all');
-        if (resF.ok) {
-          const formations = await resF.json();
-          setAllFormations(formations);
-          if (myId) setMyCreatedFormations(formations.filter(f => f.intervenant && String(f.intervenant.id) === String(myId)));
-        }
-        const resS = await fetch('http://localhost:8080/api/sessions/all');
-        if (resS.ok && myId) {
-          const allSessions = await resS.json();
-          const mySessions = allSessions.filter(s => s.intervenant && String(s.intervenant.id) === String(myId));
-          setAgenda(mySessions.sort((a, b) => new Date(a.dateDebut) - new Date(b.dateDebut)));
+
+        // On ne charge les données que si l'intervenant est validé
+        if (myId) {
+          const resF = await fetch('http://localhost:8080/api/formations/all');
+          if (resF.ok) {
+            const formations = await resF.json();
+            setAllFormations(formations);
+            setMyCreatedFormations(formations.filter(f => f.intervenant && String(f.intervenant.id) === String(myId)));
+          }
+          const resS = await fetch('http://localhost:8080/api/sessions/all');
+          if (resS.ok) {
+            const allSessions = await resS.json();
+            const mySessions = allSessions.filter(s => s.intervenant && String(s.intervenant.id) === String(myId));
+            setAgenda(mySessions.sort((a, b) => new Date(a.dateDebut) - new Date(b.dateDebut)));
+          }
         }
       } else {
-        // Étudiant Logic
+        // Étudiant Logic (Inchangé)
         const resIns = await fetch(`http://localhost:8080/api/utilisateurs/${user.id}/inscriptions`);
         if (resIns.ok) {
           const data = await resIns.json();
-          // Mappage important : on garde l'ID de l'inscription pour la signature
-          const formatted = data.map(ins => ({
-            ...ins.session,
-            inscriptionId: ins.id,
-            statutInscription: ins.statutInscription
-          }));
+          const formatted = data.map(ins => ({ ...ins.session, inscriptionId: ins.id, statutInscription: ins.statutInscription }));
           setAgenda(formatted.sort((a, b) => new Date(a.dateDebut) - new Date(b.dateDebut)));
         }
         const resStats = await fetch(`http://localhost:8080/api/utilisateurs/${user.id}/stats`);
@@ -121,7 +114,7 @@ const Profil = () => {
     finally { setLoading(false); }
   };
 
-  // --- LOGIQUE INTERVENANT : EMARGEMENT ---
+  // ... (Garder les fonctions handleSelectSessionForEmargement, validateStudentPresence, startDrawing, draw, clearCanvas, submitSignature, showNotif, getStatusBadge inchangées) ...
   const handleSelectSessionForEmargement = async (sessionId) => {
     setSelectedSessionId(sessionId);
     if (!sessionId) { setSessionStudents([]); return; }
@@ -136,12 +129,11 @@ const Profil = () => {
       const res = await fetch(`http://localhost:8080/api/inscriptions/${inscriptionId}/valider-presence`, { method: 'PUT' });
       if (res.ok) {
         showNotif("Présence validée !", "success");
-        handleSelectSessionForEmargement(selectedSessionId); // Actualiser la liste
+        handleSelectSessionForEmargement(selectedSessionId);
       } else showNotif("Erreur validation", "error");
     } catch (err) { showNotif("Erreur serveur", "error"); }
   };
 
-  // --- LOGIQUE ETUDIANT : SIGNATURE ---
   const startDrawing = (e) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -189,6 +181,7 @@ const Profil = () => {
   // --- ACTIONS CREATION ---
   const handleCreateFormation = async (e) => {
     e.preventDefault();
+    if (!currentIntervenant) return;
     const payload = { ...formationData, prix: parseFloat(formationData.prix), intervenant: { id: currentIntervenant.id } };
     try {
       const res = await fetch('http://localhost:8080/api/formations/add', {
@@ -202,43 +195,25 @@ const Profil = () => {
     } catch (err) { showNotif("Erreur réseau", "error"); }
   };
 
-  // --- HANDLER SESSION (Remplacé par la version fonctionnelle) ---
   const handleCreateSession = async (e) => {
     e.preventDefault();
     if (!currentIntervenant) return showNotif("Erreur profil", "error");
-
-    // Validation
     if (!sessionForm.date || !sessionForm.heureDebut || !sessionForm.heureFin || !sessionForm.formationId) {
       return showNotif("Veuillez remplir tous les champs obligatoires", "error");
     }
-
-    // Formatage YYYY-MM-DDTHH:mm (SANS SECONDES, pour éviter l'erreur index 16)
     const startISO = `${sessionForm.date}T${sessionForm.heureDebut}`;
     const endISO = `${sessionForm.date}T${sessionForm.heureFin}`;
-
     const payload = {
-      dateDebut: startISO,
-      dateFin: endISO,
-      nbPlaces: parseInt(sessionForm.nbPlaces, 10),
-      etat: "PLANIFIEE",
-      formation: { id: parseInt(sessionForm.formationId, 10) },
-      intervenant: { id: currentIntervenant.id },
-      prix: sessionForm.prix ? parseFloat(sessionForm.prix) : null
+      dateDebut: startISO, dateFin: endISO, nbPlaces: parseInt(sessionForm.nbPlaces, 10), etat: "PLANIFIEE",
+      formation: { id: parseInt(sessionForm.formationId, 10) }, intervenant: { id: currentIntervenant.id }, prix: sessionForm.prix ? parseFloat(sessionForm.prix) : null
     };
-
     try {
-      const res = await fetch('http://localhost:8080/api/sessions', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-      });
+      const res = await fetch('http://localhost:8080/api/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (res.ok) {
         showNotif("Session publiée !", "success");
         setSessionForm({ date: '', heureDebut: '', heureFin: '', nbPlaces: 12, formationId: '', prix: '' });
         refreshData();
-      } else {
-        const txt = await res.text();
-        console.error("Erreur Backend:", txt);
-        showNotif("Erreur planification (Vérifiez les dates)", "error");
-      }
+      } else { showNotif("Erreur planification", "error"); }
     } catch (err) { showNotif("Erreur réseau", "error"); }
   };
 
@@ -247,7 +222,6 @@ const Profil = () => {
     setTimeout(() => setNotification(null), 4000);
   };
 
-  // HELPERS BADGES
   const getStatusBadge = (status) => {
     switch (status) {
       case 'VALIDEE': return { label: 'PRÉSENCE VALIDÉE', bg: '#dcfce7', color: '#166534' };
@@ -259,9 +233,39 @@ const Profil = () => {
   if (!user) return <div style={styles.centerMsg}>Veuillez vous connecter.</div>;
   if (loading) return <div style={styles.centerMsg}>Chargement...</div>;
 
+  // --- NOUVEAU BLOCAGE : SI INTERVENANT NON VALIDÉ ---
+  if (isIntervenant && !currentIntervenant) {
+    return (
+      <div style={styles.page}>
+        <header style={styles.headerSimple}>
+          <div style={{ ...styles.container, textAlign: 'center' }}>
+            <h1 style={{ margin: '0 0 10px 0', color: '#1e293b' }}>Bienvenue, {user.prenom} !</h1>
+            <p style={{ color: '#64748b' }}>Votre compte formateur a été créé avec succès.</p>
+          </div>
+        </header>
+        <main style={styles.container}>
+          <div style={styles.pendingCard}>
+            <div style={styles.pendingIcon}>⏳</div>
+            <h2 style={{ marginTop: '20px', color: '#1e293b' }}>Compte en attente de validation</h2>
+            <p style={{ color: '#64748b', lineHeight: '1.6' }}>
+              Pour pouvoir créer des formations, planifier des sessions et gérer l'émargement,
+              votre profil doit être validé par un administrateur.
+            </p>
+            <p style={{ color: '#64748b', marginTop: '10px' }}>
+              Veuillez contacter l'administration ou patienter le temps que vos accès soient ouverts.
+            </p>
+            <button onClick={() => { localStorage.removeItem('user'); window.location.href = '/login'; }} style={styles.btnLogout}>
+              Se déconnecter
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // --- AFFICHAGE NORMAL (Si Etudiant OU Intervenant Validé) ---
   return (
     <div style={styles.page}>
-
       {notification && (
         <div style={{ ...styles.notification, borderLeftColor: notification.type === 'success' ? '#10b981' : '#ef4444' }}>
           {notification.type === 'success' ? <Icons.Check /> : <Icons.Alert />}
@@ -365,7 +369,6 @@ const Profil = () => {
                             {!isIntervenant ? (
                               <>
                                 <span style={{ ...styles.statusTag, background: badge.bg, color: badge.color }}>{badge.label}</span>
-                                {/* CONDITION POUR AFFICHER LE BOUTON SI NON VALIDÉ/NON SIGNÉ */}
                                 {(s.statutInscription !== 'VALIDEE' && s.statutInscription !== 'SIGNEE') && (
                                   <button onClick={() => { setSelectedInsId(s.inscriptionId); setShowSignModal(true); }} style={styles.btnSign}><Icons.Pen /> Signer</button>
                                 )}
@@ -383,7 +386,7 @@ const Profil = () => {
             </div>
           )}
 
-          {/* FORMATIONS */}
+          {/* FORMATIONS (Uniquement si validé) */}
           {isIntervenant && activeTab === 'formations' && (
             <div style={styles.gridSplit}>
               <div style={styles.card}>
@@ -418,14 +421,12 @@ const Profil = () => {
             </div>
           )}
 
-          {/* SESSIONS (Remplacé par la version fonctionnelle du code 2) */}
+          {/* SESSIONS */}
           {isIntervenant && activeTab === 'sessions' && (
             <div style={styles.singleColumn}>
               <div style={styles.cardForm}>
                 <h3 style={styles.cardTitle}>Planifier une Session</h3>
                 <form onSubmit={handleCreateSession} style={styles.form}>
-
-                  {/* SELECTION */}
                   <div style={styles.sectionForm}>
                     <div style={styles.formGroup}>
                       <label style={styles.label}>Formation</label>
@@ -435,64 +436,39 @@ const Profil = () => {
                       </select>
                     </div>
                   </div>
-
-                  {/* DATE & PLACES */}
                   <div style={styles.sectionForm}>
                     <div style={styles.formGrid}>
-                      <div style={styles.formGroup}>
-                        <label style={styles.label}>Date</label>
-                        <input type="date" required style={styles.input} value={sessionForm.date} onChange={e => setSessionForm({ ...sessionForm, date: e.target.value })} />
-                      </div>
-                      <div style={styles.formGroup}>
-                        <label style={styles.label}>Places</label>
-                        <input type="number" required style={styles.input} value={sessionForm.nbPlaces} onChange={e => setSessionForm({ ...sessionForm, nbPlaces: e.target.value })} />
-                      </div>
+                      <div style={styles.formGroup}><label style={styles.label}>Date</label><input type="date" required style={styles.input} value={sessionForm.date} onChange={e => setSessionForm({ ...sessionForm, date: e.target.value })} /></div>
+                      <div style={styles.formGroup}><label style={styles.label}>Places</label><input type="number" required style={styles.input} value={sessionForm.nbPlaces} onChange={e => setSessionForm({ ...sessionForm, nbPlaces: e.target.value })} /></div>
                     </div>
-                    {/* CHAMP PRIX */}
-                    <div style={{ marginTop: '15px' }}>
-                      <label style={styles.label}>Prix Session (€)</label>
-                      <input type="number" style={styles.input} value={sessionForm.prix} onChange={e => setSessionForm({ ...sessionForm, prix: e.target.value })} placeholder="Optionnel" />
-                    </div>
+                    <div style={{ marginTop: '15px' }}><label style={styles.label}>Prix Session (€)</label><input type="number" style={styles.input} value={sessionForm.prix} onChange={e => setSessionForm({ ...sessionForm, prix: e.target.value })} placeholder="Optionnel" /></div>
                   </div>
-
-                  {/* HORAIRES */}
                   <div style={styles.sectionForm}>
                     <div style={styles.formGrid}>
-                      <div style={styles.formGroup}>
-                        <label style={styles.subLabel}>Début</label>
-                        <input type="time" required style={styles.input} value={sessionForm.heureDebut} onChange={e => setSessionForm({ ...sessionForm, heureDebut: e.target.value })} />
-                      </div>
-                      <div style={styles.formGroup}>
-                        <label style={styles.subLabel}>Fin</label>
-                        <input type="time" required style={styles.input} value={sessionForm.heureFin} onChange={e => setSessionForm({ ...sessionForm, heureFin: e.target.value })} />
-                      </div>
+                      <div style={styles.formGroup}><label style={styles.subLabel}>Début</label><input type="time" required style={styles.input} value={sessionForm.heureDebut} onChange={e => setSessionForm({ ...sessionForm, heureDebut: e.target.value })} /></div>
+                      <div style={styles.formGroup}><label style={styles.subLabel}>Fin</label><input type="time" required style={styles.input} value={sessionForm.heureFin} onChange={e => setSessionForm({ ...sessionForm, heureFin: e.target.value })} /></div>
                     </div>
                   </div>
-
                   <button type="submit" style={styles.btnPrimary}><Icons.Calendar /> Valider la session</button>
                 </form>
               </div>
             </div>
           )}
 
-          {/* EMARGEMENT (Intervenant) */}
+          {/* EMARGEMENT */}
           {isIntervenant && activeTab === 'emargement' && (
             <div style={styles.singleColumn}>
               <div style={styles.card}>
                 <h3 style={styles.cardTitle}>Validation des Présences</h3>
                 <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '20px' }}>Sélectionnez une session pour voir la liste des inscrits.</p>
-
                 <div style={styles.formGroup}>
                   <select style={styles.select} value={selectedSessionId} onChange={e => handleSelectSessionForEmargement(e.target.value)}>
                     <option value="">-- Sélectionner une session --</option>
                     {agenda.map(s => (
-                      <option key={s.id} value={s.id}>
-                        {s.formation?.titre} ({new Date(s.dateDebut).toLocaleDateString()})
-                      </option>
+                      <option key={s.id} value={s.id}>{s.formation?.titre} ({new Date(s.dateDebut).toLocaleDateString()})</option>
                     ))}
                   </select>
                 </div>
-
                 {selectedSessionId && (
                   <div style={{ marginTop: '30px' }}>
                     {sessionStudents.length === 0 ? <div style={styles.emptyState}>Aucun étudiant inscrit.</div> : (
@@ -500,32 +476,16 @@ const Profil = () => {
                         {sessionStudents.map(studentIns => {
                           const badge = getStatusBadge(studentIns.statutInscription);
                           const user = studentIns.utilisateur;
-
                           return (
                             <div key={studentIns.id} style={styles.listItem}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                                <div style={styles.miniAvatar}>
-                                  {user && user.prenom ? user.prenom.charAt(0) : 'U'}
-                                </div>
-                                <div>
-                                  <span style={{ display: 'block', fontWeight: '600' }}>
-                                    {user ? `${user.prenom} ${user.nom}` : "Utilisateur inconnu"}
-                                  </span>
-                                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                                    {user?.email || "Email masqué"}
-                                  </span>
-                                </div>
+                                <div style={styles.miniAvatar}>{user && user.prenom ? user.prenom.charAt(0) : 'U'}</div>
+                                <div><span style={{ display: 'block', fontWeight: '600' }}>{user ? `${user.prenom} ${user.nom}` : "Utilisateur inconnu"}</span><span style={{ fontSize: '0.8rem', color: '#64748b' }}>{user?.email || "Email masqué"}</span></div>
                               </div>
-
                               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                <span style={{ ...styles.statusTag, background: badge.bg, color: badge.color }}>
-                                  {badge.label}
-                                </span>
-
+                                <span style={{ ...styles.statusTag, background: badge.bg, color: badge.color }}>{badge.label}</span>
                                 {studentIns.statutInscription === 'SIGNEE' && (
-                                  <button onClick={() => validateStudentPresence(studentIns.id)} style={styles.btnValidate}>
-                                    <Icons.Check /> Valider
-                                  </button>
+                                  <button onClick={() => validateStudentPresence(studentIns.id)} style={styles.btnValidate}><Icons.Check /> Valider</button>
                                 )}
                               </div>
                             </div>
@@ -546,13 +506,15 @@ const Profil = () => {
   );
 };
 
-// --- STYLES CSS-IN-JS ---
+// --- STYLES CSS-IN-JS (J'ai ajouté les styles pour la carte "Pending") ---
 const styles = {
+  // ... (Vos anciens styles ici) ...
   page: { backgroundColor: '#f8fafc', minHeight: '100vh', fontFamily: "'Inter', sans-serif", color: '#1e293b' },
   container: { maxWidth: '1000px', margin: '0 auto', padding: '40px 20px' },
   centerMsg: { textAlign: 'center', marginTop: '100px', fontSize: '1.2rem', color: '#64748b' },
   notification: { position: 'fixed', top: '20px', right: '20px', backgroundColor: 'white', padding: '15px 20px', borderRadius: '8px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: '10px', zIndex: 9999, border: '1px solid #e2e8f0', borderLeftWidth: '4px', fontWeight: '500' },
   header: { backgroundColor: 'white', borderRadius: '16px', padding: '30px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', marginBottom: '30px', border: '1px solid #e2e8f0' },
+  headerSimple: { backgroundColor: 'white', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', marginBottom: '30px', borderBottom: '1px solid #e2e8f0' },
   headerTop: { display: 'flex', alignItems: 'center', gap: '20px', paddingBottom: '20px', borderBottom: '1px solid #f1f5f9' },
   avatarContainer: { position: 'relative' },
   avatar: { width: '70px', height: '70px', borderRadius: '50%', background: '#005a8d', color: 'white', fontSize: '1.8rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center' },
@@ -613,7 +575,11 @@ const styles = {
   modalSub: { margin: '0 0 20px 0', color: '#64748b', fontSize: '0.9rem', textAlign: 'center' },
   canvasContainer: { border: '2px dashed #cbd5e1', borderRadius: '8px', background: '#f8fafc', marginBottom: '20px', display: 'flex', justifyContent: 'center' },
   canvas: { cursor: 'crosshair', touchAction: 'none' },
-  modalActions: { display: 'flex', gap: '10px', alignItems: 'center' }
+  modalActions: { display: 'flex', gap: '10px', alignItems: 'center' },
+  // Nouveau styles pour le blocage
+  pendingCard: { backgroundColor: '#fff', borderRadius: '15px', padding: '50px', textAlign: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.08)', margin: '50px auto' },
+  pendingIcon: { fontSize: '4rem' },
+  btnLogout: { marginTop: '20px', padding: '10px 20px', backgroundColor: '#cbd5e1', color: '#1e293b', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }
 };
 
 export default Profil;

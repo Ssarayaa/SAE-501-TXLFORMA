@@ -6,6 +6,6 @@ import App from './App' // Il doit importer App
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App /> 
+    <App />
   </React.StrictMode>,
 )
