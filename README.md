@@ -29,6 +29,4 @@ Projet : SAE 501- Développer pour le web et concevoir un dispositif interactifs
 
 - Figma : https://www.figma.com/design/7DCLuFAGNhnwgtRSGPfyzX/SAE-501---Design?node-id=2-426&p=f&t=g6JjJLTZYd5udCq5-0
 
-- GitHub : https://github.com/Ssarayaa/SAE-501-TXLFORMA.git
-
 - Moyens de Communication : Via Discord et partage de documents sur GitHub
